@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 12 14:29:52 2021
 
-@author: evil
-"""
 # TODO Incorporate text or email alerts
 # Text Message sending managed by textlocal.com
 
@@ -56,7 +52,8 @@ Password = '********'
 client = InfluxDBClient(host=IP, port=8086, username=User, password=Password, database=DB)
 
 ############################################################################
-
+# Helper functions
+############################################################################
 def timeCode(tic):
     """Function for timing an operation
     Define a start time 'start' outside the function with time.perf_counter()
@@ -94,9 +91,10 @@ def write_to_DB(input):
     
     client.switch_database('********')
     client.write_points(json_body)
+############################################################################
 
 class logger(object):
-    """Class to take readings from the sensors and process into format for writing to CSV file"""
+    """Class to take readings from the sensors, store values, and process into format for writing to CSV file"""
 
     def __init__(self, now):
         self.time = None
@@ -207,6 +205,9 @@ class CSVFile(object):
             writer.writerow(data)
     
     def read_last_time(self):
+        """
+        Function for reading back the last line of a saved CSV file
+        """
         try:
             with open(self._path, 'r') as f:
                 timestr = list(reversed(list(csv.reader(f))))[0][0] +'.000000'
@@ -218,6 +219,10 @@ class CSVFile(object):
             return t_now
     
     def check_for_blanks(self):
+        """
+        Function to check to see if file is up to date, or if time has
+        elapsed since the last recorded value
+        """
         # Create a definition of now
         now_str = str(datetime.datetime.now().time())
         t_now = datetime.datetime.strptime(now_str, '%H:%M:%S.%f')
@@ -251,6 +256,9 @@ class CSVFile(object):
         
 
 class CSVFileDay(CSVFile):
+    """
+    Class inheriting from CSVFile that records the readings of the current day
+    """
     def __init__(self, dlogger, now, directory, day):
         """.csv file of logger readings for 1 day
         Args:   dlogger (logger): the logger being recorded
@@ -264,6 +272,9 @@ class CSVFileDay(CSVFile):
         self.tsflag = 0
        
 class CSVFileMonth(CSVFile):
+    """
+    Class inheriting from CSVFile that records the readings of a whole month
+    """
     def __init__(self, dlogger, now, directory, month):
         self.logger = dlogger
         self._name = str(self.logger) + " Monthly Powerlog " + now.strftime('%m-%y %b') + ".csv"
@@ -274,7 +285,7 @@ class CSVFileMonth(CSVFile):
 ############################################################################
 def update(dayFile, monthFile):
     """
-    Run program to take readings and update CSV file
+   Function that runs all the code every 'period' (5 seconds) to take readings, do calculations, and record values
     """
     # Update 'now'
     now = datetime.datetime.now(pytz.timezone('Europe/London'))
@@ -321,6 +332,8 @@ def update(dayFile, monthFile):
     count += 1
     print(count)
 
+##############################################################################
+# Start of Program
 ##############################################################################
 # Set initial variables
 now = datetime.datetime.now(pytz.timezone('Europe/London'))
